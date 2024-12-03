@@ -49,7 +49,7 @@ namespace algorithm {
     }
 
     void insertionSort(std::vector<int>& arr, std::function<void(const std::vector<int>&)> stepCallback){
-        for (int i = 1; i < arr.size() + 1; i++){
+        for (int i = 1; i < arr.size(); i++){
             auto key = arr[i];
             int j = i - 1;
 
