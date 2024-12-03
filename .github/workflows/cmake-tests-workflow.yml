@@ -25,6 +25,9 @@ jobs:
     - name: Create Conda environment
       run: conda env create -f environment.yml
 
+    - name: Install Required Libraries for SFML
+      run: sudo apt-get update && sudo apt-get install -y libudev-dev
+
     - name: Fix libudev error in Conda environment
       run: |
         LIB_PATH=$(conda run -n visualizer which pip | rev | cut -d/ -f3- | rev)/lib
