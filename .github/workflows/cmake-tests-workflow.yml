@@ -15,39 +15,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
     
     - name: Set up Miniconda
-      uses: conda-incubator/setup-miniconda@v3
+      uses: conda-incubator/setup-miniconda@v2
       with:
-        environment-file: environment.yml
-        cache-environment: false
-        cache-downloads: true
-        activate-environment: visualizer
-        auto-activate-base: false
-        miniforge-version: latest
+        auto-update-conda: true
 
-    - name: List Conda environment
-      run: conda list
-
-    - name: Fix libudev bug
-      if: runner.os == 'Linux'
-      run: |
-        ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0 || echo "libudev.so.0 already exists"
+    - name: Create Conda environment
+      run: conda env create -f environment.yml
 
     - name: Configure CMake
-      run: |
-        mkdir -p ${{github.workspace}}/build
-        cd ${{github.workspace}}/build
-        cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G Ninja ..
+      run: conda run -n visualizer cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
       run: |
-        cd ${{github.workspace}}/build
-        cmake --build .
+        if [ "${{ runner.os }}" == "Linux" ]; then
+          # Fix sfml bug (Linux only)
+          conda run -n visualizer ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
+        fi
 
-    - name: Run Tests
-      run: |
-        cd ${{github.workspace}}/build
-        ctest --output-on-failure
+        conda run -n visualizer cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: conda run -n visualizer ctest -C ${{env.BUILD_TYPE}}
