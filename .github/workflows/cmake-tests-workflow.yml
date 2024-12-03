@@ -29,7 +29,13 @@ jobs:
       run: conda run -n visualizer cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
-      run: conda run -n visualizer cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: |
+        if [ "${{ runner.os }}" == "Linux" ]; then
+          # Fix sfml bug (Linux only)
+          conda run -n visualizer ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
+        fi
+
+        conda run -n visualizer cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
     - name: Test
       working-directory: ${{github.workspace}}/build
