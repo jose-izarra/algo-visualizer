@@ -25,11 +25,13 @@ jobs:
     - name: Create Conda environment
       run: conda env create -f environment.yml
 
+    - name: Fix libudev error in Conda environment
+      run: |
+        LIB_PATH=$(conda run -n visualizer which pip | rev | cut -d/ -f3- | rev)/lib
+        ln -sf $LIB_PATH/libudev.so.1 $LIB_PATH/libudev.so.0
+
     - name: Configure CMake
       run: conda run -n visualizer cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
-    - name: Fix libudev error
-      run: ln -s $(mamba run -n visualizer which pip | rev | cut -d/ -f3- | rev)/lib/libudev.so.1 $(mamba run -n visualizer which pip | rev | cut -d/ -f3- | rev)/lib/libudev.so.0
 
     - name: Build
       run: conda run -n visualizer cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
