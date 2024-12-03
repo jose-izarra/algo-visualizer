@@ -28,10 +28,12 @@ jobs:
     - name: Fix libudev error in Conda environment
       run: |
         LIB_PATH=$(conda run -n visualizer which pip | rev | cut -d/ -f3- | rev)/lib
-        ln -sf $LIB_PATH/libudev.so.1 $LIB_PATH/libudev.so.0
+        ln -sf $LIB_PATH/libudev.so.1 $LIB_PATH/libudev.so.0 || echo "libudev.so.0 already exists"
 
     - name: Configure CMake
-      run: conda run -n visualizer cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: |
+        mkdir -p ${{github.workspace}}/build
+        conda run -n visualizer cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
       run: conda run -n visualizer cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
