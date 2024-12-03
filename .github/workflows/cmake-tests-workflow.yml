@@ -25,21 +25,15 @@ jobs:
     - name: Create Conda environment
       run: conda env create -f environment.yml
 
-    - name: Install Required Libraries for SFML
-      run: sudo apt-get update && sudo apt-get install -y libudev-dev
-
-    - name: Fix libudev error in Conda environment
+    - name: Configure and compile the library
       run: |
-        LIB_PATH=$(conda run -n visualizer which pip | rev | cut -d/ -f3- | rev)/lib
-        ln -sf $LIB_PATH/libudev.so.1 $LIB_PATH/libudev.so.0 || echo "libudev.so.0 already exists"
-
-    - name: Configure CMake
-      run: |
-        mkdir -p ${{github.workspace}}/build
-        conda run -n visualizer cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
-    - name: Build
-      run: conda run -n visualizer cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        if [ "${{ runner.os }}" == "Linux" ]; then
+          # Fix sfml bug (Linux only)
+          ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
+        fi
+        mkdir build && cd build
+        cmake -DCMAKE_VERBOSE_MAKEFILE=yes -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -G Ninja ..
+        cmake --build .
 
     - name: Test
       working-directory: ${{github.workspace}}/build
